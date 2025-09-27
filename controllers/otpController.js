@@ -12,6 +12,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Request OTP
 const requestOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -44,6 +45,7 @@ const requestOtp = async (req, res) => {
   }
 };
 
+// Verify OTP
 const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
