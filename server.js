@@ -1,12 +1,14 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
 
-// Routes
-const otpRoutes = require("./routes/otpRoute");
-const policyRoutes = require("./routes/policyRoute");
-const authRoutes = require("./routes/authRoute");
+import otpRoutes from "./routes/otpRoute.js";
+import policyRoutes from "./routes/policyRoute.js";
+import authRoutes from "./routes/authRoute.js";
+import userRoute from "./routes/userRoute.js";
+
+dotenv.config();
 
 const app = express();
 
@@ -16,7 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+  .connect(process.env.MONGO_URI /* no need for old opts on Mongoose 7+ */)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
@@ -29,6 +32,7 @@ app.get("/api/test", (req, res) => {
 app.use("/api/otp", otpRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/employees", userRoute);
 
 // Start server
 const PORT = process.env.PORT || 5000;
