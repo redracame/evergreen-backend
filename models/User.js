@@ -4,21 +4,19 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ["Admin", "Employee", "Manager"],
-    required: true,
+    required: true
   },
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: true
   },
   password: {
     type: String,
-    required: true,
+    required: true
   },
   otp: String,
-  otpExpires: Date,
+  otpExpires: Date
 });
 
-const User = mongoose.model("employees", userSchema);
-
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);
