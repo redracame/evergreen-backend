@@ -12,7 +12,7 @@ const verifyAdmin = (req, res, next) => {
     if (decoded.role !== "Admin") {
       return res.status(403).json({ error: "Only admin can perform this action" });
     }
-    req.user = decoded;
+    req.user = decoded; // attach decoded user to request
     next();
   } catch (err) {
     return res.status(403).json({ error: "Invalid token" });

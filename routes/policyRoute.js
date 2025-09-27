@@ -7,21 +7,23 @@ const {
   deletePolicy,
 } = require("../controllers/policyController");
 
+const verifyAdmin = require("../middleware/verifyAdmin");
+
 const router = express.Router();
 
-// Create Policy (Admin)
-router.post("/", createPolicy);
+// Create Policy (Admin only)
+router.post("/", verifyAdmin, createPolicy);
 
-// Get All Policies
+// Update Policy (Admin only)
+router.put("/:id", verifyAdmin, updatePolicy);
+
+// Delete Policy (Admin only)
+router.delete("/:id", verifyAdmin, deletePolicy);
+
+// Get All Policies (Public)
 router.get("/", getPolicies);
 
-// Get Single Policy
+// Get Single Policy (Public)
 router.get("/:id", getPolicyById);
-
-// Update Policy (Admin)
-router.put("/:id", updatePolicy);
-
-// Delete Policy (Admin)
-router.delete("/:id", deletePolicy);
 
 module.exports = router;

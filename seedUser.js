@@ -1,14 +1,11 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 require("dotenv").config();
 const User = require("./models/User");
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB Connected"))
-.catch((err) => console.error(err));
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((err) => console.error(err));
 
 const users = [
   { role: "Admin", email: "nlokuvithana71@gmail.com", password: "Nisith1@3" },
@@ -19,8 +16,12 @@ const users = [
 ];
 
 async function seed() {
-  await User.deleteMany(); // remove old users
-  await User.insertMany(users);
+  await User.deleteMany();
+  for (let user of users) {
+    const hashed = await bcrypt.hash(user.password, 10);
+    user.password = hashed;
+    await User.create(user);
+  }
   console.log("✅ Users seeded successfully");
   mongoose.disconnect();
 }
