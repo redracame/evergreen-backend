@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 
 import otpRoutes from "./routes/otpRoute.js";
 import policyRoutes from "./routes/policyRoute.js";
-import authRoutes from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 
 dotenv.config();
@@ -31,7 +30,6 @@ app.get("/api/test", (req, res) => {
 // API routes
 app.use("/api/otp", otpRoutes);
 app.use("/api/policies", policyRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api/employees", userRoute);
 
 // Start server

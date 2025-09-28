@@ -15,15 +15,15 @@ const router = express.Router();
 router.post("/", verifyAdmin, createPolicy);
 
 // Update Policy (Admin only)
-router.put("/:id", verifyAdmin, updatePolicy);
+router.put("/:policyId", verifyAdmin, updatePolicy);
 
 // Delete Policy (Admin only)
-router.delete("/:id", verifyAdmin, deletePolicy);
+router.delete("/:policyId", verifyAdmin, deletePolicy);
 
 // Get All Policies (Public)
 router.get("/", getPolicies);
 
 // Get Single Policy (Public)
-router.get("/:id", getPolicyById);
+router.get("/:policyId", getPolicyById);
 
 module.exports = router;

@@ -3,20 +3,18 @@ const Policy = require("../models/Policy");
 // Create Policy
 const createPolicy = async (req, res) => {
   try {
-    const { title, subtitle, description } = req.body;
+    const { title, subtitle, description , policyId} = req.body;
 
-    if (!title || !subtitle || !description) {
+    if (!title || !subtitle || !description || !policyId) {
       return res.status(400).json({ error: "Title, subtitle and description are required" });
     }
 
-    const createdBy = req.user._id; // comes from verifyAdmin middleware
-
-    const newPolicy = new Policy({ title, subtitle, description, createdBy });
+    const newPolicy = new Policy({ policyId, title, subtitle, description });
     await newPolicy.save();
 
     res.status(201).json({ message: "✅ Policy created", policy: newPolicy });
   } catch (err) {
-    res.status(500).json({ error: "❌ Failed to create policy", details: err.message });
+    res.status(500).json({ error: "Failed to create policy", details: err.message });
   }
 };
 
@@ -44,10 +42,10 @@ const getPolicyById = async (req, res) => {
 // Update Policy
 const updatePolicy = async (req, res) => {
   try {
-    const { title, subtitle, description } = req.body;
-    const updatedPolicy = await Policy.findByIdAndUpdate(
-      req.params.id,
-      { title, subtitle, description },
+    const { title, subtitle, description ,policyId} = req.body;
+    const updatedPolicy = await Policy.findOneAndUpdate(
+      { policyId: req.params.policyId },
+      { title, subtitle, description, policyId },
       { new: true, runValidators: true }
     );
     if (!updatedPolicy) return res.status(404).json({ error: "Policy not found" });
@@ -60,7 +58,7 @@ const updatePolicy = async (req, res) => {
 // Delete Policy
 const deletePolicy = async (req, res) => {
   try {
-    const deletedPolicy = await Policy.findByIdAndDelete(req.params.id);
+    const deletedPolicy = await Policy.findOneAndDelete({ policyId: req.params.policyId });
     if (!deletedPolicy) return res.status(404).json({ error: "Policy not found" });
     res.json({ message: "🗑️ Policy deleted" });
   } catch (err) {
