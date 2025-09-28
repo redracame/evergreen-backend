@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import otpRoutes from "./routes/otpRoute.js";
 import policyRoutes from "./routes/policyRoute.js";
 import userRoute from "./routes/userRoute.js";
+import courseRoute from "./routes/coursesRoute.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get("/api/test", (req, res) => {
 app.use("/api/otp", otpRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/employees", userRoute);
+app.use("/api/courses", courseRoute);
 
 // Start server
 const PORT = process.env.PORT || 5000;
