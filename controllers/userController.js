@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { logEvent } from "../utils/audit.js";
 
 // ---------- helpers ----------
 function getAuthUser(req) {
@@ -53,6 +54,14 @@ export async function createEmployee(req, res) {
     const newUser = new User(data);
     await newUser.save();
 
+    logEvent(req, {
+      action: "user_create",
+      resourceType: "User",
+      resourceId: data.id,
+      status: "success",
+      message: `Employee created: ${data.email}`,
+    });
+
     try {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -68,6 +77,14 @@ export async function createEmployee(req, res) {
       return res.status(500).json({ message: "Employee created, but email sending failed" });
     }
   } catch (err) {
+    logEvent(req, {
+      action: "user_create",
+      resourceType: "User",
+      resourceId: req.body?.id,
+      status: "fail",
+      message: "Employee create error",
+      meta: { error: String(err?.message || err) }
+    });
     console.error("Create employee error:", err);
     return res.status(500).json({ message: "Employee not created" });
   }
@@ -104,6 +121,13 @@ export async function updateEmployee(req, res) {
       await User.findOneAndUpdate({ id }, data, { new: true });
       return res.json({ message: "Employee updated successfully" });
     }
+    logEvent(req, {
+      action: "user_update",
+      resourceType: "User",
+      resourceId: req.params.id,
+      status: "success",
+      message: "Employee updated"
+    });
 
     // If employee, allow only limited self-update (example: status)
     const found = await User.findOne({ id });
@@ -115,6 +139,14 @@ export async function updateEmployee(req, res) {
     await User.updateOne({ id }, { status: data.status });
     return res.json({ message: "Updated successfully" });
   } catch (e) {
+    logEvent(req, {
+      action: "user_update",
+      resourceType: "User",
+      resourceId: req.params.id,
+      status: "fail",
+      message: "Employee update failed",
+      meta: { error: String(e?.message || e) }
+    });
     return res.status(500).json({ message: "Update failed" });
   }
 }
@@ -126,29 +158,68 @@ export function deleteEmployee(req, res) {
 
   const id = req.params.id;
   return User.deleteOne({ id })
-    .then(() => res.json({ message: "Employee deleted successfully" }))
-    .catch(() => res.status(500).json({ message: "Employee delete is failed" }));
+    .then(() => {
+      logEvent(req, {
+        action: "user_delete",
+        resourceType: "User",
+        resourceId: id,
+        status: "success",
+        message: "Employee deleted"
+      });
+      res.json({ message: "Employee deleted successfully" });
+    })
+    .catch((e) => {
+      logEvent(req, {
+        action: "user_delete",
+        resourceType: "User",
+        resourceId: id,
+        status: "fail",
+        message: "Employee delete failed",
+        meta: { error: String(e?.message || e) }
+      });
+      res.status(500).json({ message: "Employee delete is failed" });
+    });
 }
 
 export function loginEmployee(req, res) {
   const data = req.body || {};
   User.findOne({ email: data.email }).then(user => {
-    if (!user) return res.status(404).json({ error: "Employee not found" });
+    if (!user) {
+      logEvent(req, {
+        action: "login_fail",
+        resourceType: "Auth",
+        status: "fail",
+        message: "Employee not found",
+        meta: { email: data.email }
+      });
+      return res.status(404).json({ error: "Employee not found" });
+    }
 
     const ok = bcrypt.compareSync(data.password, user.password);
-    if (!ok) return res.status(401).json({ error: "Incorrect password", email: user.email });
+    if (!ok) {
+      logEvent(req, {
+        action: "login_fail",
+        resourceType: "Auth",
+        status: "fail",
+        message: "Incorrect password",
+        meta: { email: user.email }
+      });
+      return res.status(401).json({ error: "Incorrect password", email: user.email });
+    }
 
     const token = jwt.sign(
-      {
-        employeeId: user.id,
-        firstName: user.firstName,
-        lastName:  user.lastName,
-        role:      user.role,
-        email:     user.email,
-      },
+      { employeeId: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    logEvent(req, {
+      action: "login_success",
+      resourceType: "Auth",
+      status: "success",
+      message: "User logged in",
+      meta: { email: user.email }
+    });
 
     return res.json({ message: "Login Successful", token, user });
   });

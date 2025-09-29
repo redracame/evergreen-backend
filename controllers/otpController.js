@@ -1,7 +1,9 @@
-const User = require("../models/User");
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
-require("dotenv").config();
+import User from "../models/User.js";
+import { logEvent } from "../utils/audit.js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -13,12 +15,19 @@ const transporter = nodemailer.createTransport({
 });
 
 // Request OTP
-const requestOtp = async (req, res) => {
+export const requestOtp = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
+      logEvent(req, {
+        action: "otp_request",
+        resourceType: "OTP",
+        status: "fail",
+        message: "User not found",
+        meta: { email }
+      });
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -46,12 +55,19 @@ const requestOtp = async (req, res) => {
 };
 
 // Verify OTP
-const verifyOtp = async (req, res) => {
+export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     const user = await User.findOne({ email });
 
     if (!user || user.otp !== otp || Date.now() > user.otpExpires) {
+      logEvent(req, {
+        action: "otp_verify",
+        resourceType: "OTP",
+        status: "fail",
+        message: "Invalid or expired OTP",
+        meta: { email }
+      });
       return res.status(400).json({ error: "Invalid or expired OTP" });
     }
 
@@ -62,8 +78,14 @@ const verifyOtp = async (req, res) => {
     return res.json({ message: "OTP verified successfully" });
   } catch (error) {
     console.error("Verify OTP error:", error);
+    logEvent(req, {
+      action: "otp_verify",
+      resourceType: "OTP",
+      status: "fail",
+      message: "Invalid or expired OTP",
+      meta: { email }
+    });
     return res.status(500).json({ error: "OTP verification failed" });
   }
 };
 
-module.exports = { requestOtp, verifyOtp };

@@ -1,14 +1,17 @@
 import Course from "../models/courses.js";
 import { isAdmin } from "./userController.js"; // reusing your helper
+import { logEvent } from "../utils/audit.js";
 
 // return 401 if no token; 403 if not admin
 function requireAdmin(req, res) {
   const hasToken = (req.headers?.authorization || "").startsWith("Bearer ");
   if (!hasToken) {
+    logEvent(req, { action: "auth_missing", resourceType: "Auth", status: "fail", message: "Missing token" });
     res.status(401).json({ success: false, error: "Unauthenticated (missing token)" });
     return false;
   }
   if (!isAdmin(req)) {
+    logEvent(req, { action: "auth_forbidden", resourceType: "Auth", status: "fail", message: "Admins only" });
     res.status(403).json({ success: false, error: "Admins only" });
     return false;
   }
@@ -34,8 +37,16 @@ export const createCourse = async (req, res) => {
     const course = new Course(req.body);
     await course.save();
     res.status(201).json({ success: true, data: course });
+    logEvent(req, {
+      action: "course_create",
+      resourceType: "Course",
+      resourceId: req.body?.courseId,
+      status: "success",
+      message: "Course created"
+    });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
+    logEvent(req, { action: "course_create", resourceType: "Course", resourceId: req.body?.courseId, status: "fail", message: error.message });
   }
 };
 
@@ -75,8 +86,10 @@ export const updateCourse = async (req, res) => {
 
     if (!course) return res.status(404).json({ success: false, message: "Course not found" });
     res.status(200).json({ success: true, data: course });
+    logEvent(req, { action: "course_update", resourceType: "Course", resourceId: req.params.courseId, status: "success", message: "Course updated" });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
+    logEvent(req, { action: "course_update", resourceType: "Course", resourceId: req.params.courseId, status: "fail", message: error.message });
   }
 };
 
@@ -88,7 +101,9 @@ export const deleteCourse = async (req, res) => {
     const course = await Course.findOneAndDelete({ courseId: req.params.courseId });
     if (!course) return res.status(404).json({ success: false, message: "Course not found" });
     res.status(200).json({ success: true, message: "Course deleted successfully" });
+    logEvent(req, { action: "course_delete", resourceType: "Course", resourceId: req.params.courseId, status: "success", message: "Course deleted" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+    logEvent(req, { action: "course_delete", resourceType: "Course", resourceId: req.params.courseId, status: "fail", message: error.message });
   }
 };
