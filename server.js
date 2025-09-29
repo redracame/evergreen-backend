@@ -7,6 +7,7 @@ import otpRoutes from "./routes/otpRoute.js";
 import policyRoutes from "./routes/policyRoute.js";
 import userRoute from "./routes/userRoute.js";
 import courseRoute from "./routes/coursesRoute.js";
+import complianceRoute from "./routes/complianceRoute.js";
 
 import auditLogRoute from "./routes/auditLogRoute.js";
 import auditRequestLogger from "./middleware/auditRequestLogger.js";
@@ -27,11 +28,6 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// API routes
-app.use("/api/otp", otpRoutes);
-app.use("/api/policies", policyRoutes);
-app.use("/api/employees", userRoute);
-app.use("/api/courses", courseRoute);
 
 // attach req.user if token present
 app.use((req, _res, next) => {
@@ -57,6 +53,13 @@ app.use(auditRequestLogger);
 
 // audit log routes
 app.use("/api/audit-logs", auditLogRoute);
+
+// API routes
+app.use("/api/otp", otpRoutes);
+app.use("/api/policies", policyRoutes);
+app.use("/api/employees", userRoute);
+app.use("/api/courses", courseRoute);
+app.use("/api/compliance", complianceRoute);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
